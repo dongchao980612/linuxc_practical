@@ -56,4 +56,7 @@ dkms.conf
 !*.*
 !*/
 
+*.o
 .vscode
+
+**/build/*

@@ -1,4 +1,4 @@
-/*端口扫扫描程序，只支持TCP端口*/
+/*端口扫描程序，只支持TCP端口*/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -23,13 +23,16 @@ typedef struct port_segment_t {
 
 } port_segment;
 
-/*自定义错误处理函数*/
+/// @brief 错误处理函数
+/// @param err_string   错误信息字符串
+/// @param line         错误信息所在行
 void my_err_handler( const char* err_string, int line ) {
-    fprintf( stderr, "line:%d ", line );
+    fprintf( stderr, "line : %d ", line );
     perror( err_string );
     exit( 1 );
 }
-/// @brief 扫面某一ip地址的谋和端口的函数
+
+/// @brief 扫面某一ip地址的某个端口的函数
 /// @param serv_addr
 /// @return -1 出错
 /// @return 0 目标端口未打开
@@ -81,16 +84,23 @@ void* scaner( void* arg ) {
         }
     }
 }
+
+/*
+命令行参数 ：
+    -m 最大端口
+    -a 目标主机地址IP地址
+    -n 最大线程数量
+*/
 int main( int argc, char const* argv[] ) {
 
-    pthread_t*     thread;  //指向所有的线程id
+    pthread_t*     thread;  // 指向所有的线程id
     int            max_port;
     int            thread_num;
     int            seg_len;
-    struct in_addr dest_ip;  //目标主机ip
+    struct in_addr dest_ip;  // 目标主机ip
     int            i;
 
-    /*检查参数个数*/
+    // 检查参数个数
     if ( argc != 7 ) {
         printf( "Usage:[-m][max_port][-a][serv_address][-n][thread_number]\n" );
         exit( 1 );
@@ -121,18 +131,19 @@ int main( int argc, char const* argv[] ) {
             continue;
         }
     }
-    printf( "命令行解析结束....\n" );
-    /*如果输入的最大的端口号小于线程数，则将线程数设为最大端口号*/
+
+    // 如果输入的最大的端口号小于线程数，则将线程数设为最大端口号
     if ( max_port < thread_num ) {
         thread_num = max_port;
     }
 
     seg_len = max_port / thread_num;
+    printf( "thread_num = %d, max_port = %d, seg_len = %d\n", thread_num, max_port, seg_len );
     if ( ( max_port % thread_num ) != 0 ) {
         thread += 1;
     }
 
-    /*分配内存空间*/
+    // 分配内存空间
     thread = ( pthread_t* )malloc( thread_num * sizeof( pthread_t ) );
     for ( i = 0; i < thread_num; i++ ) {
         port_segment portinfo;
@@ -146,10 +157,10 @@ int main( int argc, char const* argv[] ) {
             portinfo.max_port = portinfo.min_port + seg_len;
         }
 
-        /*创建线程*/
+        // 创建线程
         if ( pthread_create( &thread[ i ], NULL, scaner, ( void* )&portinfo ) != 0 ) {
             my_err_handler( "pthread_create", __LINE__ );
-            /*主线程等待子线程结束*/
+            // 主线程等待子线程结束
             pthread_join( thread[ i ], NULL );
         }
     }
